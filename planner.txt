@@ -1,0 +1,22 @@
+The end goal of this project is:
+Shop to buy weapons n stuff
+Main menu
+Character selection
+
+Actions:
+rob
+steal
+work
+beg
+
+Events (stuff that happens randomly):
+death
+mugging
+arrest (if wanted)
+win lottery (if purchased)
+News cycle
+promotion (if working)
+fired
+
+ight thats basically all I want in this project.
+
