@@ -1,6 +1,0 @@
-#!/bin/bash
-
-gcc src/game.c -pthread -o bin/game.out
-gcc src/helperfuncs.c -o bin/helperfuncs.out 
-
-./bin/game.out 
