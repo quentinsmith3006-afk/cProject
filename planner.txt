@@ -8,6 +8,8 @@ rob
 steal
 work
 beg
+eat
+sleep
 
 Events (stuff that happens randomly):
 death
