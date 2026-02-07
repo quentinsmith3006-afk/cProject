@@ -5,9 +5,10 @@
 #include <string.h> // idk bruh a lot of methods
 #include <math.h> // rand
 
-#ifdef BORDER
+#ifdef BORDER 
 #include "headers/declarations.h" // CLEAR bash script location n more probably
 #endif
+
 #include "headers/helperfuncs.h"
 
 pthread_t thread;
@@ -259,6 +260,7 @@ void buyFood() {
   if (player->money < 10) {
     news = "You are too poor to buy food\n";
   } else {
+    player->money -= 10;
     player->health += 5;
   }
 }
