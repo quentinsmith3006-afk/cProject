@@ -1,3 +1,4 @@
+#ifndef HELPERFUNCS_H
 #include <stdio.h>
 #include <stdlib.h>
 #include "declarations.h"
@@ -12,3 +13,4 @@ void printfile(char* path) {
   
   fclose(myFile);
 }
+#endif
