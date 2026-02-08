@@ -1,9 +1,11 @@
+xy
 #include <stdlib.h> // system
 #include <stdbool.h> // true variable
 #include <pthread.h> // pthread_create
 #include <stdio.h> // printf
 #include <string.h> // idk bruh a lot of methods
 #include <math.h> // rand
+#define JOBNUM 5
 
 #ifdef BORDER 
 #include "headers/declarations.h" // CLEAR bash script location n more probably
@@ -19,7 +21,9 @@ void beg();
 void work();
 void shop();
 void rob();
+void scanEmployers();
 void shopSelection(char a);
+void applicationMenu();
 
 Player* player;
 char* characters[4];
@@ -28,10 +32,14 @@ char nameBuff[40];
 
 char* news;
 
+Job* jobs[JOBNUM];
+
 int main(void) {
   Player p;
   player = &p;
   player->gun = NULL;
+  player->work = NULL;
+  scanEmployers();
   
   system(CLEAR);
   printfile(BORDER);
@@ -70,13 +78,19 @@ int main(void) {
   player->name = &nameBuff[0];
   player->health = 100;
   
-  pthread_create(&thread, NULL, gameLoop, NULL);
+  //pthread_create(&thread, NULL, gameLoop, NULL);
 
+  gameLoop();
   
-  pthread_join(thread, NULL);
+  //pthread_join(thread, NULL);
   
   for (int i = 0; i < 5; i++) {
     free(characters[i]);
+  }
+
+  for (int i = 0; i < JOBNUM; i++) {
+    free(jobs[i]->employer);
+    free(jobs[i]);
   }
   
   return 0;
@@ -85,10 +99,7 @@ int main(void) {
 void * gameLoop() {
   void selection(char a);
   
-  while (true) {
-    if (player->health <= 0) {
-       pthread_exit(NULL);
-    }    
+  while (player->health > 0) {
     system(CLEAR);
     printfile(BORDER);
     printf("Name: %s\n", player->name);
@@ -96,7 +107,7 @@ void * gameLoop() {
     printfile(MINISEPAR);
     printf("Health: %i\nMoney: %f\nWantedLevel: %i\n", player->health, player->money, player->wantedLevel);
     printfile(MINISEPAR);
-    printf("Rob: r | Work: w | Shop: s | Beg: (Anything Else)\n");
+    printf("Rob: r | Work: %c | Shop: s | Beg: (Anything Else)\n", (player->work == NULL ? 'a' : 'w'));
     printfile(MINISEPAR);
     if (news != NULL) 
       printf("%s", news);
@@ -119,17 +130,107 @@ void selection(char a) {
     rob();
     return;
   case 'w':
-    work();    
+    if (player->work != NULL) {
+       work();
+    }
+    news = "You are unemployed.\n";
     return;
   case 's':
     shop();
     return;
+  case 'a':
+    if (player->work == NULL) {
+      applicationMenu();
+      return;
+    }
   default:
     beg();    
     
   }
 }
 
+/*
+ * JOBS SECTION
+ *
+ *
+ */
+void scanEmployers() {
+
+  char* path = EMPLOYERS;
+
+  FILE* file = fopen(path, "r");
+
+  for (int i = 0; i < JOBNUM; i++) {    
+    char* empl = malloc(50);
+
+    char* localPay = malloc(sizeof(int));
+    fgets(empl, 50, file);
+    fgets(localPay, sizeof(localPay), file);
+    
+    double p = atof(localPay);
+
+
+    free(localPay);
+
+    Job* aJob = malloc(sizeof(Job));
+
+    aJob->employer = empl;
+    aJob->pay = p;
+
+    jobs[i] = aJob;
+  }
+  
+  fclose(file);
+}
+
+void applicationMenu() {
+  system(CLEAR);
+  printfile(BORDER);
+  printfile(MINISEPAR);
+  printf("Apply for:");
+  for (int i = 0; i < JOBNUM; i++) {
+    printf("\n%s (%i)\n", jobs[i]->employer, i);
+  }
+  printfile(BORDER);
+  char garbage;
+  char selection;
+  scanf("%c", &garbage);
+  scanf("%c", &selection);
+}
+
+void applySelection(char g) {
+  // todo 
+}
+
+void apply(Job* job) {
+  int randy = rand() % 101;
+
+  if (player->wantedLevel > 0) {
+    news = "You were reported to the authorities.";
+    return;
+  }
+
+  if (randy <= 5) {
+    news = "You were hired!";
+    player->work = job;
+  } else if (randy > 5 && randy <= 15) {
+    news = "You failed the interview.";
+    player->health -= 5;
+  } else if (randy > 15 && randy <= 30) {
+    news = "You got a interview but it was a scam.";
+    player->health -= 10;    
+  } else if (randy > 30 && randy < 50) {
+    news = "The manager's cousin got the position!";
+  } else {
+    news = "You got no response.";
+  }
+}
+
+/*
+ * ACTIONS SECTION
+ *
+ *
+ */
 void beg() {
   int randy = rand() % 101;
   
@@ -160,8 +261,9 @@ void beg() {
 
 void work() {
   int randy = rand() % 101;
+  double modifier = 1;
   if (randy <= 10) {
-    (*player).money += 100;
+    (*player).money += 50;
     news = "Very productive day, the boss gave you a bonus.\n";
   } else if (randy > 10 && randy <= 15) {
     news = "You spilled soup on someone, the boss is withholding your pay.\n";    
@@ -178,10 +280,19 @@ void work() {
 }
 
 void rob() {
-
-  if ((*player).gun == NULL) {
+  if ((*player).gun == NULL || player->gun->bullets == 0) {
     news = "You are cooked bruh, never do tis again\n";
     return;
+  }
+
+  if (player->gun->bullets == 0) {
+    if (player->gun->magazines == 0) {
+      news = "You don't have any ammo.";
+      return;
+    }
+
+    player->gun->magazines -= 1;
+    player->gun->bullets = player->gun->magCapacity;
   }
   
   int randy = rand() % 101;
@@ -194,8 +305,10 @@ void rob() {
     news = "Robbery gone terribly wrong. You killed someone!\n";
     (*player).health -= 15;
     (*player).wantedLevel += 2;
+    player->gun->bullets -= 5;
     (*player).money += 5;
   } else if (randy > 15 && randy <= 40) {
+    player->gun->bullets -= 2;    
     (*player).money += 10;
     news = "Robbery was a bust. Barely anything!\n";    
   } else if (randy > 40 && randy <= 90) {
@@ -203,13 +316,23 @@ void rob() {
     news = "Nothing good to rob.\n";
   } else if (randy == 91) {
     (*player).health -= 90;
+    player->gun->bullets -= player->gun->magCapacity;    
     news = "You were shot.\n";
   } else {
     (*player).money += 4;
     news = "You found money on the floor\n";    
   }
+
+  if (player->gun->bullets <= 0) {
+    player->gun->bullets = 0;
+  }
 }
 
+/*
+ * SHOP SECTION
+ *
+ *
+ */
 void shop() {
   void shopSelection(char a);
   
@@ -245,10 +368,10 @@ void shopSelection(char a) {
 }
 
 void buyWeapon() {
-  if (player->money < 150) {
+  if (player->money < 1500) {
     news = "You are too poor to buy a weapon.\n";
   } else {
-    player->money -= 150;
+    player->money -= 1500;
     player->gun = malloc(12);
     player->gun->magazines = 1;
     player->gun->magCapacity = 15;

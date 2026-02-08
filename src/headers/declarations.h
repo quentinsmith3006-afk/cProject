@@ -8,6 +8,7 @@
 #define MINISEPAR "./resources/main/miniSep.txt"
 #define SHOPKEEPER "./resources/shop/shopkeeper.txt"
 #define SHOPNAME "./resources/shop/shopname.txt"
+#define EMPLOYERS "./resources/employers.txt"
 
 
 typedef enum {
